@@ -1,0 +1,241 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  REST API of todo app
+
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    Handler: index.handler
+    Timeout: 60
+    Tags:
+      stage:
+        Ref: StageName
+
+Parameters:
+  StageName:
+    Type: String
+    Default: dev
+    Description: The Lambda Function Stage
+
+Resources:
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:
+        Fn::Sub: todo-app-api-${StageName}
+      StageName: dev
+      Cors:
+        AllowMethods: "'POST, PUT, GET, OPTIONS, DELETE'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+        MaxAge: "'600'"
+
+  ListTasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./api/src/list-tasks/
+      FunctionName:
+        Fn::Sub: todo-app-${StageName}-lists-tasks
+      Policies:
+        DynamoDBReadPolicy:
+          TableName:
+            Ref: TasksTable
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: TasksTable
+      Events:
+        List:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: GET
+
+            RestApiId:
+              Ref: RestApi
+
+  CreateTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./api/src/create-task/
+      FunctionName:
+        Fn::Sub: todo-app-${StageName}-create-task
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName:
+            Ref: TasksTable
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: TasksTable
+      Events:
+        Create:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: POST
+            RestApiId:
+              Ref: RestApi
+
+  GetTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./api/src/get-task/
+      FunctionName:
+        Fn::Sub: todo-app-${StageName}-get-task
+      Policies:
+        DynamoDBReadPolicy:
+          TableName:
+            Ref: TasksTable
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: TasksTable
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /tasks/{id}
+            Method: GET
+            RestApiId:
+              Ref: RestApi
+
+  DeleteTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./api/src/delete-task/
+      FunctionName:
+        Fn::Sub: todo-app-${StageName}-delete-task
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName:
+            Ref: TasksTable
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: TasksTable
+      Events:
+        Delete:
+          Type: Api
+          Properties:
+            Path: /tasks/{id}
+            Method: DELETE
+            RestApiId:
+              Ref: RestApi
+
+  UpdateTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./api/src/update-task/
+      FunctionName:
+        Fn::Sub: todo-app-${StageName}-update-task
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName:
+            Ref: TasksTable
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: TasksTable
+      Events:
+        Update:
+          Type: Api
+          Properties:
+            Path: /tasks/{id}
+            Method: PUT
+            RestApiId:
+              Ref: RestApi
+
+  TasksTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: todo-app-${StageName}-tasks
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      Tags:
+        stage:
+          Ref: StageName
+
+  WebappBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref WebappBucket
+      PolicyDocument:
+        Statement:
+          - Action: "s3:GetObject"
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${WebappBucket}/*
+            Principal:
+              CanonicalUser: !GetAtt OriginAccessIdentity.S3CanonicalUserId
+  OriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref AWS::StackName
+
+  CloudFrontDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Comment: AWS Todo app
+        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        Origins:
+          - DomainName: !Sub ${WebappBucket}.s3.amazonaws.com
+            Id: s3origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${OriginAccessIdentity}
+          - DomainName: !Sub ${RestApi}.execute-api.${AWS::Region}.amazonaws.com
+            OriginPath: /dev
+            Id: apiOrigin
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          DefaultTTL: 0
+          MinTTL: 0
+          MaxTTL: 0
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          TargetOriginId: s3origin
+          ViewerProtocolPolicy: redirect-to-https
+        Enabled: true
+Outputs:
+  ApiUrl:
+    Value:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: RestApi
+          - Fn::Sub: ".execute-api.${AWS::Region}.amazonaws.com/dev"
+  WebUrl:
+    Description: URL of the Web endpoint
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+  WebappBucket:
+    Description: The S3 bucket containing the SPA
+    Value: !Ref WebappBucket
+  CloudFrontDistribution:
+    Description: The CloudFront distribution used as endpoint
+    Value: !Ref CloudFrontDistribution
