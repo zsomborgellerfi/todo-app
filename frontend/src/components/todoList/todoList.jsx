@@ -1,14 +1,27 @@
 import React from "react";
-import { List, Paper } from "@material-ui/core";
+import { CircularProgress, List, ListItem, Paper } from "@material-ui/core";
 
 import TodoListItem from "../todoListItem/todoListItem";
 
-const TodoList = ({ todos, ...props }) => {
+const TodoList = ({ todos, newTodoLoading, ...props }) => {
   return (
     <div>
       {!!todos.length && (
         <Paper style={{ margin: 16 }}>
           <List>
+            {newTodoLoading && (
+              <ListItem
+                divider={true}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {" "}
+                <CircularProgress />
+              </ListItem>
+            )}
             {todos.map((todo, idx) => (
               <TodoListItem
                 {...todo}

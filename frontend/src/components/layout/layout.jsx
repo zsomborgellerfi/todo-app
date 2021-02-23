@@ -15,7 +15,14 @@ const Layout = ({ children }) => (
   <ThemeProvider theme={theme}>
     <Paper
       elevation={0}
-      style={{ padding: 0, margin: 0, backgroundColor: "#fafafa" }}
+      style={{
+        padding: 0,
+        margin: 0,
+        backgroundColor: "#fafafa",
+        display: "flex",
+        height: "100%",
+        flexDirection: "column",
+      }}
     >
       <AppBar color="primary" position="static" style={{ height: 64 }}>
         <Container>

@@ -1,9 +1,9 @@
 const aws = require('aws-sdk');
 
-const TasksTableName = process.env.TABLE_NAME;
+const TodosTableName = process.env.TABLE_NAME;
 
 exports.handler = async (event) => {
-  const tasks = await listTasks();
+  const todos = await listTodos();
 
   return {
     statusCode: 200,
@@ -13,13 +13,13 @@ exports.handler = async (event) => {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PUT"
     },
-    body: JSON.stringify(tasks, null, 2)
+    body: JSON.stringify(todos, null, 2)
   };
 };
 
-async function listTasks() {
+async function listTodos() {
   const params = {
-    TableName: TasksTableName
+    TableName: TodosTableName
   };
 
   const dynamoDB = new aws.DynamoDB.DocumentClient();
@@ -27,7 +27,7 @@ async function listTasks() {
     const results = await dynamoDB.scan(params).promise();
     return results.Items;
   } catch (error) {
-    console.log('Failed to fetch tasks: ' + error);
+    console.log('Failed to fetch todos: ' + error);
     throw error;
   }
 }

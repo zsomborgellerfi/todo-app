@@ -1,19 +1,37 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { API_URL } from "../lib/constants";
 export const useTodos = (initialValue = []) => {
     const [todos, setTodos] = useState(initialValue);
-    async function fetchTodos() {
-        const response = await axios.get(process.env.REACT_APP_API_URL + "/tasks");
-        setTodos(response.data);
-    }
-    
+    const [loading, setLoading] = useState(false);
+    const [newTodoLoading, setNewTodoLoading] = useState(false);
+
     useEffect(() => {
+        setLoading(true);
         fetchTodos();
     }, []);
 
-    async function addTodo(title) {
+    async function fetchTodos() {
         try {
-            await axios.post(process.env.REACT_APP_API_URL + "/tasks", { title });
+            const response = await axios.get(
+                API_URL + "/todos"
+            );
+            setTodos(response.data);
+        } catch (e) {
+            console.error("Whoops, something went wrong", e);
+        } finally {
+            setLoading(false);
+            setNewTodoLoading(false)
+        }
+    }
+
+    async function addTodo(title) {
+        setNewTodoLoading(true);
+        try {
+            await axios.post(
+                API_URL + "/todos",
+                { title }
+            );
             fetchTodos();
         } catch (e) {
             console.error("Whoops, something went wrong", e);
@@ -21,26 +39,41 @@ export const useTodos = (initialValue = []) => {
     }
     async function updateTodo(id, checked) {
         try {
-            await axios.put(process.env.REACT_APP_API_URL + "/tasks/" + id, {
-                checked: !checked,
-            });
             setTodos(
                 todos.map((todo) =>
                     todo.id === id ? { ...todo, checked: !checked } : todo
                 )
             );
+            await axios.put(
+                API_URL +
+                "/todos/" +
+                id,
+                {
+                    checked: !checked,
+                }
+            );
+
         } catch (e) {
             console.error("Whoops, something went wrong", e);
+        } finally {
+            setLoading(false);
         }
     }
     async function deleteTodo(id) {
         try {
-            await axios.delete(process.env.REACT_APP_API_URL + "/tasks/" + id);
-        } catch (e) {
             setTodos(todos.filter((todo) => todo.id !== id));
+            await axios.delete(
+                API_URL +
+                "/todos/" +
+                id
+            );
+        } catch (e) {
+            console.error("Whoops, something went wrong", e);
         }
     }
     return {
+        loading,
+        newTodoLoading,
         todos,
         addTodo: (title) => {
             if (title !== "") {

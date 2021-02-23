@@ -1,5 +1,5 @@
 {
-  "name": "delete-task",
+  "name": "list-todos",
   "version": "1.0.0",
   "main": "index.js"
 }

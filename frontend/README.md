@@ -16,4 +16,4 @@ You will also see any lint errors in the console.
 
 ### Connect to AWS
 
-Set REACT_APP_API_URL .env variable to your rest api's url.
+Set API_URL variable in lib/constants.js to your REST API's url.

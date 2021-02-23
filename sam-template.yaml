@@ -31,127 +31,127 @@ Resources:
         AllowOrigin: "'*'"
         MaxAge: "'600'"
 
-  ListTasksFunction:
+  ListTodosFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./api/src/list-tasks/
+      CodeUri: ./api/src/list-todos/
       FunctionName:
-        Fn::Sub: todo-app-${StageName}-lists-tasks
+        Fn::Sub: todo-app-${StageName}-lists-todos
       Policies:
         DynamoDBReadPolicy:
           TableName:
-            Ref: TasksTable
+            Ref: TodosTable
       Environment:
         Variables:
           TABLE_NAME:
-            Ref: TasksTable
+            Ref: TodosTable
       Events:
         List:
           Type: Api
           Properties:
-            Path: /tasks
+            Path: /todos
             Method: GET
 
             RestApiId:
               Ref: RestApi
 
-  CreateTaskFunction:
+  CreateTodoFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./api/src/create-task/
+      CodeUri: ./api/src/create-todo/
       FunctionName:
-        Fn::Sub: todo-app-${StageName}-create-task
+        Fn::Sub: todo-app-${StageName}-create-todo
       Policies:
         DynamoDBCrudPolicy:
           TableName:
-            Ref: TasksTable
+            Ref: TodosTable
       Environment:
         Variables:
           TABLE_NAME:
-            Ref: TasksTable
+            Ref: TodosTable
       Events:
         Create:
           Type: Api
           Properties:
-            Path: /tasks
+            Path: /todos
             Method: POST
             RestApiId:
               Ref: RestApi
 
-  GetTaskFunction:
+  GetTodoFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./api/src/get-task/
+      CodeUri: ./api/src/get-todo/
       FunctionName:
-        Fn::Sub: todo-app-${StageName}-get-task
+        Fn::Sub: todo-app-${StageName}-get-todo
       Policies:
         DynamoDBReadPolicy:
           TableName:
-            Ref: TasksTable
+            Ref: TodosTable
       Environment:
         Variables:
           TABLE_NAME:
-            Ref: TasksTable
+            Ref: TodosTable
       Events:
         Get:
           Type: Api
           Properties:
-            Path: /tasks/{id}
+            Path: /todos/{id}
             Method: GET
             RestApiId:
               Ref: RestApi
 
-  DeleteTaskFunction:
+  DeleteTodoFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./api/src/delete-task/
+      CodeUri: ./api/src/delete-todo/
       FunctionName:
-        Fn::Sub: todo-app-${StageName}-delete-task
+        Fn::Sub: todo-app-${StageName}-delete-todo
       Policies:
         DynamoDBCrudPolicy:
           TableName:
-            Ref: TasksTable
+            Ref: TodosTable
       Environment:
         Variables:
           TABLE_NAME:
-            Ref: TasksTable
+            Ref: TodosTable
       Events:
         Delete:
           Type: Api
           Properties:
-            Path: /tasks/{id}
+            Path: /todos/{id}
             Method: DELETE
             RestApiId:
               Ref: RestApi
 
-  UpdateTaskFunction:
+  UpdateTodoFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./api/src/update-task/
+      CodeUri: ./api/src/update-todo/
       FunctionName:
-        Fn::Sub: todo-app-${StageName}-update-task
+        Fn::Sub: todo-app-${StageName}-update-todo
       Policies:
         DynamoDBCrudPolicy:
           TableName:
-            Ref: TasksTable
+            Ref: TodosTable
       Environment:
         Variables:
           TABLE_NAME:
-            Ref: TasksTable
+            Ref: TodosTable
       Events:
         Update:
           Type: Api
           Properties:
-            Path: /tasks/{id}
+            Path: /todos/{id}
             Method: PUT
             RestApiId:
               Ref: RestApi
 
-  TasksTable:
+  TodosTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
       TableName:
-        Fn::Sub: todo-app-${StageName}-tasks
+        Fn::Sub: todo-app-${StageName}-todos
       PrimaryKey:
         Name: id
         Type: String
