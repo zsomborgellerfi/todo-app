@@ -1,1 +1,1 @@
-export const API_URL = "https://vec1ppe29f.execute-api.eu-west-1.amazonaws.com/dev"
+export const API_URL = "https://todo-app-api.eu-west-1.amazonaws.com/dev"
